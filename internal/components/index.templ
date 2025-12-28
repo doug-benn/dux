@@ -1,0 +1,110 @@
+package components
+
+import "github.com/doug-benn/dux/internal/model"
+
+templ HTML(groups []model.CategoryGroup) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<meta name="description" content="Hello world"/>
+			<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"></script>
+			<script src="https://unpkg.com/hyperscript.org@0.9.14"></script>
+			<title>Dux</title>
+			<link rel="stylesheet" type="text/css" href="/assets/styles.css"/>
+		</head>
+		<body
+			class="flex flex-col min-h-screen"
+			hx-on:click="const a = event.target.closest('a'); if(a) htmx.ajax('POST', '/log_click', {values: {id: a.id}})"
+			hx-on:auxclick="const a = event.target.closest('a'); if(a) htmx.ajax('POST', '/log_click', {values: {id: a.id}})"
+		>
+			<div id="ui">
+				@UI(groups, false)
+			</div>
+			<button class="btn primary" hx-get="/modal" hx-target="body" hx-swap="beforeend">Open a Modal</button>
+		</body>
+	</html>
+}
+
+templ UI(groups []model.CategoryGroup, isEdit bool) {
+	@Header(isEdit)
+	@Links(groups, isEdit)
+	if isEdit {
+		@CreateLinkForm()
+	}
+}
+
+templ Header(isEdit bool) {
+	if isEdit {
+		<button
+			hx-post="/lock"
+			hx-target="#ui"
+			hx-swap="innerHTML"
+		>
+			Lock
+		</button>
+	} else {
+		<button
+			hx-post="/unlock"
+			hx-prompt="Enter Admin PIN:"
+			hx-target="#ui"
+			hx-swap="innerHTML"
+		>
+			Unlock
+		</button>
+	}
+}
+
+templ Links(groups []model.CategoryGroup, isEdit bool) {
+	<div id="links">
+		for _, group := range groups {
+			<div class="category-wrapper">
+				<h2>{ group.Name }</h2>
+				<div>
+					for _, link := range group.Links {
+						if isEdit {
+							<div>Editable Link</div>
+						} else {
+							<a
+								id={ link.ID }
+								href={ link.Url }
+								target="_blank"
+							>
+								if link.Icon.Valid && link.Icon.String != "" {
+									<img src={ "/" + link.Icon.String } alt={ link.Name } class="w-8 h-8 object-cover"/>
+								}
+								{ link.Name } - { link.Hits }
+							</a>
+						}
+					}
+				</div>
+			</div>
+		}
+	</div>
+}
+
+templ CreateLinkForm() {
+	<form hx-post="/add_link" hx-target="#links" hx-swap="innerHTML" enctype="multipart/form-data" class="flex flex-col gap-4">
+		<input type="text" name="name" placeholder="Link Name" required/>
+		<input type="url" name="url" placeholder="https://..." required/>
+		<input type="text" name="category" placeholder="Category (optional)"/>
+		<label for="icon">Icon Image:</label>
+		<input type="file" id="icon" name="icon" accept="image/*"/>
+		<button type="submit">Add Link</button>
+	</form>
+}
+
+templ Modal() {
+	<div id="modal" _="on closeModal add .closing then wait for animationend then remove me">
+		<div class="modal-underlay" _="on click trigger closeModal"></div>
+		<div class="modal-content">
+			<h1>Modal Dialog</h1>
+			This is the modal content.
+			You can put anything here, like text, or a form, or an image.
+			<br/>
+			<br/>
+			<button class="btn danger" _="on click trigger closeModal">Close</button>
+		</div>
+	</div>
+}
