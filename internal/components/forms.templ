@@ -1,0 +1,68 @@
+package components
+
+import (
+	"github.com/doug-benn/dux/internal/database/queries"
+	"strconv"
+)
+
+templ AddLinkForm() {
+	<form
+		id="add-form"
+		hx-post="/add"
+		hx-target="#links"
+		hx-swap="innerHTML"
+		hx-encoding="multipart/form-data"
+		hx-on::after-request="if(event.detail.successful) htmx.trigger('#add-form', 'closeModal')"
+	>
+		<label for="name">Name:</label>
+		<input type="text" name="name" placeholder="Display Name" required/>
+		<label for="url">Link Address:</label>
+		<input type="url" name="url" placeholder="https://..." required/>
+		<label for="category">Links Category:</label>
+		<input type="text" name="category" placeholder="Category (optional)"/>
+		<label for="colour">Colour:</label>
+		<input type="color" name="colour" value="#ff0000"/>
+		<label for="icon">Icon Image:</label>
+		<input type="file" id="icon" name="icon" accept="image/*"/>
+		<div class="form-controls">
+			<button type="submit">Add Link</button>
+			<button _="on click trigger closeModal">Cancel</button>
+		</div>
+	</form>
+}
+
+templ EditLinkForm(link queries.Link) {
+	<form
+		id="edit-form"
+		hx-put={ "/save?id=" + strconv.FormatInt(link.ID, 10) }
+		hx-encoding="multipart/form-data"
+		hx-target={ "#link-" + strconv.FormatInt(link.ID, 10) }
+		hx-swap="outerHTML"
+		hx-on::after-request="if(event.detail.successful) htmx.trigger('#edit-form', 'closeModal')"
+	>
+		<label for="name">Name:</label>
+		<input type="text" name="name" placeholder="Display Name" value={ link.Name } required/>
+		<label for="url">Link Address:</label>
+		<input type="url" name="url" placeholder="https://..." value={ link.Url } required/>
+		<label for="category">Links Category:</label>
+		<input type="text" name="category" placeholder="Category (optional)" value={ link.Category.String }/>
+		<label for="colour">Colour:</label>
+		<input type="color" name="colour" value="#ff0000" value={ link.Colour.String }/>
+		<label for="icon">Icon Image:</label>
+		<input type="file" id="icon" name="icon" accept="image/*"/>
+		<div class="form-controls">
+			<button type="submit">Save</button>
+			<button _="on click trigger closeModal">Cancel</button>
+		</div>
+	</form>
+}
+
+//Wraps a component in a modal
+templ Modal(content templ.Component) {
+	<div id="modal" _="on closeModal add .closing then wait for animationend then remove me">
+		<div class="modal-underlay" _="on click trigger closeModal"></div>
+		<div class="modal-content">
+			@content
+		</div>
+	</div>
+}

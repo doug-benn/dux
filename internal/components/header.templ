@@ -1,0 +1,41 @@
+package components
+
+templ Header(isEdit bool) {
+	<header>
+		@SearchBar()
+		if isEdit {
+			<button
+				hx-post="/lock"
+				hx-target="#ui"
+				hx-swap="innerHTML"
+			>
+				Lock
+			</button>
+			<button hx-get="/add_form" hx-target="body" hx-swap="beforeend">Add Link</button>
+		} else {
+			<button
+				hx-post="/unlock"
+				hx-prompt="Enter Admin PIN:"
+				hx-target="#ui"
+				hx-swap="innerHTML"
+			>
+				Unlock
+			</button>
+		}
+	</header>
+}
+
+templ SearchBar() {
+	<input
+		type="search"
+		name="search"
+		placeholder="Search"
+		hx-post="/search"
+		hx-trigger="input changed delay:500ms, keyup[key=='Enter']"
+		hx-target="#links"
+		hx-indicator=".htmx-indicator"
+	/>
+	<span class="htmx-indicator">
+		Searching...
+	</span>
+}

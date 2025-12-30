@@ -21,13 +21,19 @@ func AddRoutes(
 	cache *cache.Cache,
 	database database.Database,
 ) {
+
 	//CRUD
-	mux.Handle("POST /add_link", HandleCreateLink(logger, cache, database))
+	mux.Handle("POST /add", HandleAddLink(logger, cache, database))
 	mux.Handle("POST /log_click", HandleLinkClicked(logger, cache, database))
 
 	//UI components
 	mux.Handle("/{$}", HandleRoot(logger, cache, database))
-	mux.Handle("GET /modal", HandleModal(logger, cache, database))
+
+	mux.Handle("GET /add_form", HandleModal(logger, cache, database))
+	mux.Handle("GET /edit_form", HandleEditModal(logger, cache, database))
+
+	//Search
+	mux.Handle("POST /search", HandleSearch(logger, cache, database))
 
 	//Lock and unlock the UI
 	mux.Handle("POST /unlock", HandleUnlock(logger, cache, database))

@@ -1,0 +1,42 @@
+package components
+
+import (
+	"github.com/doug-benn/dux/internal/model"
+	"strconv"
+)
+
+templ Links(groups []model.CategoryGroup, isEdit bool) {
+	<section id="links">
+		for _, group := range groups {
+			<header>{ group.Name }</header>
+			<div class="category">
+				for _, link := range group.Links {
+					if isEdit {
+						<button
+							hx-get={ "/edit_form?id=" + strconv.FormatInt(link.ID, 10) }
+							hx-target="body"
+							hx-swap="beforeend"
+						>
+							<span>{ link.Name }</span>
+							<span>Edit</span>
+						</button>
+					} else {
+						<a
+							id={ "link-" + strconv.FormatInt(link.ID, 10) }
+							data-id={ link.ID }
+							href={ templ.SafeURL(link.Url) }
+							target="_blank"
+						>
+							<div class="link" style={ "background-color: " + link.Colour.String }>
+								if link.Icon.Valid && link.Icon.String != "" {
+									<img src={ "/" + link.Icon.String } alt={ "icon for " + link.Name }/>
+								}
+								{ link.Name } - { link.Hits }
+							</div>
+						</a>
+					}
+				}
+			</div>
+		}
+	</section>
+}
