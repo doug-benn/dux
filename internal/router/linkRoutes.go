@@ -40,13 +40,12 @@ func HandleRoot(logger *slog.Logger, cache *cache.Cache, database database.Datab
 
 func HandleAddLink(logger *slog.Logger, cache *cache.Cache, database database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// 1. Parse multipart form (max 10MB)
+
 		if err := r.ParseMultipartForm(10 << 20); err != nil {
 			http.Error(w, "Form too large", http.StatusBadRequest)
 			return
 		}
 
-		// 2. Extract Text Fields
 		name := r.FormValue("name")
 		url := r.FormValue("url")
 		category := sql.NullString{
@@ -63,14 +62,12 @@ func HandleAddLink(logger *slog.Logger, cache *cache.Cache, database database.Da
 			return
 		}
 
-		// 3. Handle File Upload (Optional)
 		var iconPath sql.NullString
 		file, handler, err := r.FormFile("icon")
 
 		if err == nil {
 			defer file.Close()
 
-			// Create unique filename and save to disk
 			fileName := fmt.Sprintf("%d-%s", time.Now().Unix(), handler.Filename)
 			fullPath := filepath.Join("./uploads/", fileName)
 
@@ -86,8 +83,6 @@ func HandleAddLink(logger *slog.Logger, cache *cache.Cache, database database.Da
 			iconPath = sql.NullString{String: fullPath, Valid: true}
 		}
 
-		// 4. Single Database Insert
-		// Uses the COALESCE logic we defined in your SQL earlier
 		_, err = database.Queries().CreateLink(r.Context(), queries.CreateLinkParams{
 			Name:     name,
 			Url:      url,
@@ -97,6 +92,89 @@ func HandleAddLink(logger *slog.Logger, cache *cache.Cache, database database.Da
 		})
 
 		if err != nil {
+			http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		links, err := database.Queries().ListLinks(r.Context())
+		if err != nil {
+			logger.Error("failed to fetch category data", "error", err)
+		}
+
+		groupedLinks := GroupAndSortLinks(links)
+
+		if err := components.Links(groupedLinks, true).Render(r.Context(), w); err != nil {
+			logger.Error("Failed to render component", "error", err)
+		}
+	}
+}
+
+func HandleUpdateLink(logger *slog.Logger, cache *cache.Cache, database database.Database) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		idStr := r.URL.Query().Get("id")
+		saveId, err := strconv.ParseInt(idStr, 10, 64)
+		if err != nil || saveId == 0 {
+			http.Error(w, "Invalid Link ID", http.StatusBadRequest)
+			logger.Error("invalid link id")
+			return
+		}
+
+		if err := r.ParseMultipartForm(10 << 20); err != nil {
+			http.Error(w, "Form too large", http.StatusBadRequest)
+			logger.Error("form too large")
+			return
+		}
+
+		name := r.FormValue("name")
+		url := r.FormValue("url")
+		category := sql.NullString{
+			String: r.FormValue("category"),
+			Valid:  r.FormValue("category") != "",
+		}
+		colour := sql.NullString{
+			String: r.FormValue("colour"),
+			Valid:  r.FormValue("colour") != "",
+		}
+
+		if name == "" || url == "" {
+			http.Error(w, "Name and URL are required", http.StatusBadRequest)
+			logger.Error("name and url are required fields")
+			return
+		}
+
+		var iconPath string
+		file, handler, err := r.FormFile("icon")
+
+		if err == nil {
+			defer file.Close()
+
+			fileName := fmt.Sprintf("%d-%s", time.Now().Unix(), handler.Filename)
+			fullPath := filepath.Join("./uploads/", fileName)
+
+			dst, err := os.Create(fullPath)
+			if err != nil {
+				logger.Error("failed to save icon", "error", err)
+				http.Error(w, "Failed to save icon", http.StatusInternalServerError)
+				return
+			}
+			defer dst.Close()
+			io.Copy(dst, file)
+
+			iconPath = fullPath
+		}
+
+		err = database.Queries().UpdateLink(r.Context(), queries.UpdateLinkParams{
+			Name:     name,
+			Url:      url,
+			Icon:     iconPath,
+			Category: category,
+			Colour:   colour,
+			ID:       saveId,
+		})
+
+		if err != nil {
+			logger.Error("update link failed", "error", err)
 			http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}

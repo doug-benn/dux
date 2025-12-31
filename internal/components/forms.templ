@@ -15,13 +15,13 @@ templ AddLinkForm() {
 		hx-on::after-request="if(event.detail.successful) htmx.trigger('#add-form', 'closeModal')"
 	>
 		<label for="name">Name:</label>
-		<input type="text" name="name" placeholder="Display Name" required/>
+		<input type="text" id="name" name="name" placeholder="Display Name" required/>
 		<label for="url">Link Address:</label>
-		<input type="url" name="url" placeholder="https://..." required/>
+		<input type="url" id="url" name="url" placeholder="https://..." required/>
 		<label for="category">Links Category:</label>
-		<input type="text" name="category" placeholder="Category (optional)"/>
+		<input type="text" id="category" name="category" placeholder="Category (optional)"/>
 		<label for="colour">Colour:</label>
-		<input type="color" name="colour" value="#ff0000"/>
+		<input type="color" id="colour" name="colour" value="#ff0000"/>
 		<label for="icon">Icon Image:</label>
 		<input type="file" id="icon" name="icon" accept="image/*"/>
 		<div class="form-controls">
@@ -36,18 +36,18 @@ templ EditLinkForm(link queries.Link) {
 		id="edit-form"
 		hx-put={ "/save?id=" + strconv.FormatInt(link.ID, 10) }
 		hx-encoding="multipart/form-data"
-		hx-target={ "#link-" + strconv.FormatInt(link.ID, 10) }
-		hx-swap="outerHTML"
+		hx-target="#links"
+		hx-swap="innerHTML"
 		hx-on::after-request="if(event.detail.successful) htmx.trigger('#edit-form', 'closeModal')"
 	>
 		<label for="name">Name:</label>
-		<input type="text" name="name" placeholder="Display Name" value={ link.Name } required/>
+		<input type="text" id="name" name="name" placeholder="Display Name" value={ link.Name } required/>
 		<label for="url">Link Address:</label>
-		<input type="url" name="url" placeholder="https://..." value={ link.Url } required/>
+		<input type="url" id="url" name="url" placeholder="https://..." value={ link.Url } required/>
 		<label for="category">Links Category:</label>
-		<input type="text" name="category" placeholder="Category (optional)" value={ link.Category.String }/>
+		<input type="text" id="category" name="category" placeholder="Category (optional)" value={ link.Category.String }/>
 		<label for="colour">Colour:</label>
-		<input type="color" name="colour" value="#ff0000" value={ link.Colour.String }/>
+		<input type="color" id="colour" name="colour" value={ link.Colour.String }/>
 		<label for="icon">Icon Image:</label>
 		<input type="file" id="icon" name="icon" accept="image/*"/>
 		<div class="form-controls">

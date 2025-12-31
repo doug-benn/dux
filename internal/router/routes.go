@@ -25,6 +25,7 @@ func AddRoutes(
 	//CRUD
 	mux.Handle("POST /add", HandleAddLink(logger, cache, database))
 	mux.Handle("POST /log_click", HandleLinkClicked(logger, cache, database))
+	mux.Handle("PUT /save", HandleUpdateLink(logger, cache, database))
 
 	//UI components
 	mux.Handle("/{$}", HandleRoot(logger, cache, database))

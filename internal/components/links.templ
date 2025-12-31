@@ -13,12 +13,17 @@ templ Links(groups []model.CategoryGroup, isEdit bool) {
 				for _, link := range group.Links {
 					if isEdit {
 						<button
+							id={ "link-" + strconv.FormatInt(link.ID, 10) }
 							hx-get={ "/edit_form?id=" + strconv.FormatInt(link.ID, 10) }
 							hx-target="body"
 							hx-swap="beforeend"
 						>
-							<span>{ link.Name }</span>
-							<span>Edit</span>
+							<div class="link" style={ "background-color: " + link.Colour.String }>
+								if link.Icon.Valid && link.Icon.String != "" {
+									<img class="link-icon" src={ "/" + link.Icon.String } alt={ "icon for " + link.Name }/>
+								}
+								{ link.Name } - { link.Hits }
+							</div>
 						</button>
 					} else {
 						<a
@@ -29,7 +34,7 @@ templ Links(groups []model.CategoryGroup, isEdit bool) {
 						>
 							<div class="link" style={ "background-color: " + link.Colour.String }>
 								if link.Icon.Valid && link.Icon.String != "" {
-									<img src={ "/" + link.Icon.String } alt={ "icon for " + link.Name }/>
+									<img class="link-icon" src={ "/" + link.Icon.String } alt={ "icon for " + link.Name }/>
 								}
 								{ link.Name } - { link.Hits }
 							</div>
